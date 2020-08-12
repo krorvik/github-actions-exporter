@@ -35,7 +35,7 @@ func NewContext() []cli.Flag {
 		cli.StringSliceFlag{
 			Name:   "github_repos, grs",
 			Value:  &Github.Repositories,
-			EnvVar: "GIHUB_REPOS",
+			EnvVar: "GITHUB_REPOS",
 			Usage:  "List all repositories you want get informations. Format <orga>/<repo>,<orga>/<repo2>,<orga>/<repo3> (like test/test)",
 		},
 		cli.IntFlag{
