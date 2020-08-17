@@ -18,3 +18,4 @@
 .envrc
 github-actions-exporter*
 releases/
+tmp/
