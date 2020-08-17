@@ -38,6 +38,14 @@ var (
 		},
 		[]string{"repo", "id", "node_id", "head_branch", "head_sha", "run_number", "event", "status"},
 	)
+
+	workflowLatestStatusGauge = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_workflow_latest_status",
+			Help: "workflow latest status",
+		},
+		[]string{"repo", "workflow_id", "workflow", "job_id", "head_branch", "head_sha", "run_number", "event", "status"},
+	)
 )
 
 type runners struct {
@@ -67,6 +75,18 @@ type job struct {
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
 	UpdatedAt  string `json:"updated_at"`
+	WorkflowID int    `json:"workflow_id"`
+}
+
+type workflows struct {
+	TotalCount int
+	Workflows  []workflow `json:"workflows"`
+}
+
+type workflow struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	State string `json:"state"`
 }
 
 // main init configuration
@@ -84,6 +104,7 @@ func main() {
 func runWeb(ctx *cli.Context) {
 	go getRunnersFromGithub()
 	go getJobsFromGithub()
+	go getWorkflowLatestStatus()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "/metrics")
@@ -97,6 +118,7 @@ func runWeb(ctx *cli.Context) {
 func init() {
 	prometheus.MustRegister(runnersGauge)
 	prometheus.MustRegister(jobsGauge)
+	prometheus.MustRegister(workflowLatestStatusGauge)
 }
 
 func getRunnersFromGithub() {
@@ -157,6 +179,70 @@ func getJobsFromGithub() {
 					s = 4
 				}
 				jobsGauge.WithLabelValues(repo, strconv.Itoa(r.ID), r.NodeID, r.HeadBranch, r.HeadSha, strconv.Itoa(r.RunNumber), r.Event, r.Status).Set(s)
+			}
+		}
+
+		time.Sleep(time.Duration(config.Github.Refresh) * time.Second)
+	}
+}
+
+// ワークフロー毎の最新ステータスを登録する
+func getWorkflowLatestStatus() {
+	client := &http.Client{}
+
+	for {
+		for _, repo := range config.Github.Repositories {
+			wMap := make(map[int]string)
+
+			var ws workflows
+			reqWs, _ := http.NewRequest("GET", "https://api.github.com/repos/"+repo+"/actions/workflows", nil)
+			reqWs.Header.Set("Authorization", "token "+config.Github.Token)
+			respWs, err := client.Do(reqWs)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = json.NewDecoder(respWs.Body).Decode(&ws)
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, w := range ws.Workflows {
+				wMap[w.ID] = w.Name
+			}
+
+			var p jobsReturn
+			req, _ := http.NewRequest("GET", "https://api.github.com/repos/"+repo+"/actions/runs", nil)
+			req.Header.Set("Authorization", "token "+config.Github.Token)
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = json.NewDecoder(resp.Body).Decode(&p)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			latestJobsMap := make(map[int]job)
+			for _, r := range p.WorkflowRuns {
+				// run_number: ワークフロー毎のユニーク値で大きいほど新しい
+				// https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#github-context
+				if latestJobsMap[r.WorkflowID].RunNumber < r.RunNumber {
+					latestJobsMap[r.WorkflowID] = r
+				}
+			}
+
+			for _, r := range latestJobsMap {
+				workflowName := wMap[r.WorkflowID]
+				var s float64 = 0
+				if r.Conclusion == "success" {
+					s = 1
+				} else if r.Conclusion == "skipped" {
+					s = 2
+				} else if r.Status == "in_progress" {
+					s = 3
+				} else if r.Status == "queued" {
+					s = 4
+				}
+				workflowLatestStatusGauge.WithLabelValues(repo, strconv.Itoa(r.WorkflowID), workflowName, strconv.Itoa(r.ID), r.HeadBranch, r.HeadSha, strconv.Itoa(r.RunNumber), r.Event, r.Status).Set(s)
 			}
 		}
 
