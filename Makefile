@@ -13,8 +13,8 @@ build:
 	go build
 
 .PHONY: run
-run: build
-	set -a; . .env; ./github-actions-exporter
+run:
+	set -a; . .env; go run main.go
 
 .PHONY: releases
 releases:
