@@ -17,4 +17,12 @@ do
 
   curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
     "https://api.github.com/repos/${repo}/actions/workflows" > "${output_dir}/${now}.workflows.json"
+
+  # ワークフロー毎の履歴
+  for workflow_id in $(jq -r '.workflows[]|.id' "${output_dir}/${now}.workflows.json")
+  do
+    echo ${workflow_id}
+    curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+      "https://api.github.com/repos/${repo}/actions/workflows/${workflow_id}/runs" > "${output_dir}/${now}.workflow.${workflow_id}.json"
+  done
 done
