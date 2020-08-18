@@ -75,11 +75,10 @@ type job struct {
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
 	UpdatedAt  string `json:"updated_at"`
-	WorkflowID int    `json:"workflow_id"`
 }
 
 type workflows struct {
-	TotalCount int
+	TotalCount int        `json:"total_count"`
 	Workflows  []workflow `json:"workflows"`
 }
 
@@ -87,6 +86,22 @@ type workflow struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
 	State string `json:"state"`
+}
+
+type workflowRuns struct {
+	TotalCount   int           `json:"total_count"`
+	WorkflowRuns []workflowRun `json:"workflow_runs"`
+}
+
+type workflowRun struct {
+	ID         int    `json:"id"`
+	HeadBranch string `json:"head_branch"`
+	HeadSha    string `json:"head_sha"`
+	RunNumber  int    `json:"run_number"`
+	Event      string `json:"event"`
+	Status     string `json:"status"`
+	Conclusion string `json:"conclusion"`
+	UpdatedAt  string `json:"updated_at"`
 }
 
 // main init configuration
@@ -192,9 +207,8 @@ func getWorkflowLatestStatus() {
 
 	for {
 		for _, repo := range config.Github.Repositories {
-			wMap := make(map[int]string)
-
 			var ws workflows
+			// TODO ワークフローが増えるとページング対応が必要になる
 			reqWs, _ := http.NewRequest("GET", "https://api.github.com/repos/"+repo+"/actions/workflows", nil)
 			reqWs.Header.Set("Authorization", "token "+config.Github.Token)
 			respWs, err := client.Do(reqWs)
@@ -205,44 +219,38 @@ func getWorkflowLatestStatus() {
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			// ワークフローが多いとアクセスが多すぎるかもしれない
 			for _, w := range ws.Workflows {
-				wMap[w.ID] = w.Name
-			}
-
-			var p jobsReturn
-			req, _ := http.NewRequest("GET", "https://api.github.com/repos/"+repo+"/actions/runs", nil)
-			req.Header.Set("Authorization", "token "+config.Github.Token)
-			resp, err := client.Do(req)
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = json.NewDecoder(resp.Body).Decode(&p)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			latestJobsMap := make(map[int]job)
-			for _, r := range p.WorkflowRuns {
-				// run_number: ワークフロー毎のユニーク値で大きいほど新しい
-				// https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#github-context
-				if latestJobsMap[r.WorkflowID].RunNumber < r.RunNumber {
-					latestJobsMap[r.WorkflowID] = r
+				var wrs workflowRuns
+				req, _ := http.NewRequest("GET", "https://api.github.com/repos/"+repo+"/actions/workflows/"+strconv.Itoa(w.ID)+"/runs", nil)
+				req.Header.Set("Authorization", "token "+config.Github.Token)
+				resp, err := client.Do(req)
+				if err != nil {
+					log.Fatal(err)
 				}
-			}
-
-			for _, r := range latestJobsMap {
-				workflowName := wMap[r.WorkflowID]
-				var s float64 = 0
-				if r.Conclusion == "success" {
-					s = 1
-				} else if r.Conclusion == "skipped" {
-					s = 2
-				} else if r.Status == "in_progress" {
-					s = 3
-				} else if r.Status == "queued" {
-					s = 4
+				err = json.NewDecoder(resp.Body).Decode(&wrs)
+				if err != nil {
+					log.Fatal(err)
 				}
-				workflowLatestStatusGauge.WithLabelValues(repo, strconv.Itoa(r.WorkflowID), workflowName, strconv.Itoa(r.ID), r.HeadBranch, r.HeadSha, strconv.Itoa(r.RunNumber), r.Event, r.Status).Set(s)
+
+				log.Printf("wrs.TotalCount: %d, w.Name: %s", wrs.TotalCount, w.Name)
+
+				if wrs.TotalCount > 0 {
+					// 配列の最初が最新の履歴
+					r := wrs.WorkflowRuns[0]
+					var s float64 = 0
+					if r.Conclusion == "success" {
+						s = 1
+					} else if r.Conclusion == "skipped" {
+						s = 2
+					} else if r.Status == "in_progress" {
+						s = 3
+					} else if r.Status == "queued" {
+						s = 4
+					}
+					workflowLatestStatusGauge.WithLabelValues(repo, strconv.Itoa(w.ID), w.Name, strconv.Itoa(r.ID), r.HeadBranch, r.HeadSha, strconv.Itoa(r.RunNumber), r.Event, r.Status).Set(s)
+				}
 			}
 		}
 
