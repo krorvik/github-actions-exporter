@@ -49,6 +49,4 @@ jobs:
           username: ${{ secrets.DOCKER_LOGIN }}
           password:  ${{ secrets.DOCKER_PASSWORD }}
           repository: krorvik/github-actions-runner
-          tags:
-            - latest
-            - ${{ needs.set_version.outputs.version }}
+          tags: latest,${{ needs.set_version.outputs.version }}
