@@ -29,10 +29,7 @@ Gauge type
 |-------------|-------------------------------------------------------|
 | event       | Event type like push/pull_request/...                 |
 | head_branch | Branch name                                           |
-| head_sha    | Commit ID                                             |
-| node_id     | Node ID (github actions) (mandatory ??)               |
 | repo        | Repository like \<org>/\<repo>                        |
-| run_number  | Build id for the repo (incremental id => 1/2/3/4/...) |
 | status      | Workflow status (completed/in_progress)               |
 
 ### github_runner_status
