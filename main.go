@@ -44,7 +44,7 @@ var (
 			Name: "github_workflow_latest_status",
 			Help: "workflow latest status",
 		},
-		[]string{"repo", "workflow", "head_branch", "event", "status"},
+		[]string{"repo", "workflow", "head_branch", "event"},
 	)
 )
 
@@ -238,7 +238,7 @@ func getWorkflowLatestStatus() {
 					} else if r.Status == "queued" {
 						s = 4
 					}
-					workflowLatestStatusGauge.WithLabelValues(repo, w.Name, r.HeadBranch, r.Event, r.Status).Set(s)
+					workflowLatestStatusGauge.WithLabelValues(repo, w.Name, r.HeadBranch, r.Event).Set(s)
 				}
 			}
 		}
