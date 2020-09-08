@@ -48,5 +48,5 @@ jobs:
           path: ./
           username: ${{ secrets.DOCKER_LOGIN }}
           password:  ${{ secrets.DOCKER_PASSWORD }}
-          repository: krorvik/github-actions-runner
+          repository: krorvik/github-actions-exporter
           tags: latest,${{ needs.set_version.outputs.version }}
