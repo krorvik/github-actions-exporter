@@ -44,7 +44,7 @@ var (
 			Name: "github_workflow_latest_status",
 			Help: "workflow latest status",
 		},
-		[]string{"repo", "workflow", "head_branch", "head_sha", "event", "status"},
+		[]string{"repo", "workflow", "head_branch", "event", "status"},
 	)
 )
 
