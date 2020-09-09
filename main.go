@@ -146,9 +146,9 @@ func getRunnersFromGithub() {
 			}
 			for _, r := range p.Runners {
 				if r.Status == "online" {
-					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name).Set(1)
+					runnersGauge.WithLabelValues(repo, r.OS, r.Name).Set(1)
 				} else {
-					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name).Set(0)
+					runnersGauge.WithLabelValues(repo, r.OS, r.Name).Set(0)
 				}
 
 			}
