@@ -28,7 +28,7 @@ var (
 			Name: "github_runner_status",
 			Help: "runner status",
 		},
-		[]string{"repo", "os", "status", "name"},
+		[]string{"repo", "os", "name"},
 	)
 
 	jobsGauge = prometheus.NewGaugeVec(
