@@ -28,7 +28,7 @@ var (
 			Name: "github_runner_status",
 			Help: "runner status",
 		},
-		[]string{"repo", "os", "status", "name", "id"},
+		[]string{"repo", "os", "status", "name"},
 	)
 
 	jobsGauge = prometheus.NewGaugeVec(
@@ -54,7 +54,6 @@ type runners struct {
 }
 
 type runner struct {
-	ID     int    `json:"id"`
 	Name   string `json:"name"`
 	OS     string `json:"os"`
 	Status string `json:"status"`
@@ -147,9 +146,9 @@ func getRunnersFromGithub() {
 			}
 			for _, r := range p.Runners {
 				if r.Status == "online" {
-					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name, strconv.Itoa(r.ID)).Set(1)
+					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name).Set(1)
 				} else {
-					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name, strconv.Itoa(r.ID)).Set(0)
+					runnersGauge.WithLabelValues(repo, r.OS, r.Status, r.Name).Set(0)
 				}
 
 			}
