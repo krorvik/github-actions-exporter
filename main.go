@@ -36,7 +36,7 @@ var (
 			Name: "github_job",
 			Help: "job status",
 		},
-		[]string{"repo", "head_branch", "event", "status"},
+		[]string{"repo", "id", "head_branch", "run_number", "event", "status"},
 	)
 
 	workflowLatestStatusGauge = prometheus.NewGaugeVec(
@@ -185,7 +185,7 @@ func getJobsFromGithub() {
 				} else if r.Status == "queued" {
 					s = 4
 				}
-				jobsGauge.WithLabelValues(repo, r.HeadBranch, r.Event, r.Status).Set(s)
+				jobsGauge.WithLabelValues(repo, strconv.Itoa(r.ID), r.HeadBranch, strconv.Itoa(r.RunNumber), r.Event, r.Status).Set(s)
 			}
 		}
 
