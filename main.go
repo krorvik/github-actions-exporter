@@ -65,7 +65,9 @@ type jobsReturn struct {
 }
 
 type job struct {
+  ID         int    `json:"id"`
 	HeadBranch string `json:"head_branch"`
+  RunNumber  int    `json:"run_number"`
 	Event      string `json:"event"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
