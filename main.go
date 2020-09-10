@@ -46,6 +46,15 @@ var (
 		},
 		[]string{"repo", "workflow", "head_branch", "event"},
 	)
+
+	workflowRunsGauge = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_workflow_runs",
+			Help: "Workflow runs",
+		},
+		[]string{"repo", "workflow", "id", "status", "url", "created_at", "updated_at", "head_branch", "event"},
+	)
+
 )
 
 type runners struct {
@@ -91,11 +100,14 @@ type workflowRuns struct {
 }
 
 type workflowRun struct {
+	ID         int    `json:"id"`
 	HeadBranch string `json:"head_branch"`
 	Event      string `json:"event"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
+	CreatedAt  string `json:"created_at"`
 	UpdatedAt  string `json:"updated_at"`
+  URL        string `json:"html_url"`
 }
 
 // main init configuration
@@ -240,6 +252,9 @@ func getWorkflowLatestStatus() {
 						s = 4
 					}
 					workflowLatestStatusGauge.WithLabelValues(repo, w.Name, r.HeadBranch, r.Event).Set(s)
+          for _,  run := range wrs.WorkflowRuns {
+            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event)
+          }
 				}
 			}
 		}
