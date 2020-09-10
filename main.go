@@ -140,6 +140,7 @@ func init() {
 	prometheus.MustRegister(runnersGauge)
 	prometheus.MustRegister(jobsGauge)
 	prometheus.MustRegister(workflowLatestStatusGauge)
+	prometheus.MustRegister(workflowRunsGauge)
 }
 
 func getRunnersFromGithub() {
