@@ -254,7 +254,18 @@ func getWorkflowLatestStatus() {
 					}
 					workflowLatestStatusGauge.WithLabelValues(repo, w.Name, r.HeadBranch, r.Event).Set(s)
           for _,  run := range wrs.WorkflowRuns {
-            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.Status, run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event)
+            var s float64 = 0
+					  if run.Conclusion == "success" {
+						  s = 1
+					  } else if run.Conclusion == "skipped" {
+						  s = 2
+					  } else if run.Status == "in_progress" {
+						  s = 3
+					  } else if run.Status == "queued" {
+						  s = 4
+					  }
+            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.Status, run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event).Set(s)
+
 		        //[]string{"repo", "workflow", "id", "status", "url", "created_at", "updated_at", "head_branch", "event"},
           }
 				}
