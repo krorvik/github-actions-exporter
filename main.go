@@ -52,7 +52,7 @@ var (
 			Name: "github_workflow_runs",
 			Help: "Workflow runs",
 		},
-		[]string{"repo", "workflow", "id", "url", "created_at", "updated_at", "head_branch", "event"},
+		[]string{"repo", "workflow", "id", "url", "created_at", "updated_at", "head_branch", "event", "commiter", "commit_sha", "commit_time", "commit_message"},
 	)
 
 )
@@ -100,14 +100,27 @@ type workflowRuns struct {
 }
 
 type workflowRun struct {
-	ID         int    `json:"id"`
-	HeadBranch string `json:"head_branch"`
-	Event      string `json:"event"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-  URL        string `json:"html_url"`
+	ID         int    	`json:"id"`
+	HeadBranch string 	`json:"head_branch"`
+	Event      string 	`json:"event"`
+	Status     string 	`json:"status"`
+	Conclusion string 	`json:"conclusion"`
+	CreatedAt  string 	`json:"created_at"`
+	UpdatedAt  string 	`json:"updated_at"`
+  URL        string 	`json:"html_url"`
+	Commit     commit   `json:"head_commit"`
+}
+
+type commit struct {
+	Commit_sha  string 		`json:"id"`
+	Message   	string 		`json:"message"`
+	Timestamp 	string 		`json:"timestamp"`
+	Committer   committer  `json:"committer"`
+}
+
+type committer struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 // main init configuration
@@ -238,7 +251,7 @@ func getWorkflowLatestStatus() {
 					log.Fatal(err)
 				}
 
-				log.Printf("wrs.TotalCount: %d, w.Name: %s", wrs.TotalCount, w.Name)
+				//log.Printf("wrs.TotalCount: %d, w.Name: %s", wrs.TotalCount, w.Name)
 
 				if wrs.TotalCount > 0 {
 					r := wrs.WorkflowRuns[0]
@@ -264,8 +277,8 @@ func getWorkflowLatestStatus() {
 					  } else if run.Status == "queued" {
 						  s = 4
 					  }
-            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event).Set(s)
-
+            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event, run.Commit.Committer.Name, run.Commit.Commit_sha, run.Commit.Timestamp, run.Commit.Message).Set(s)
+						//[]string{"repo", "workflow", "id", "url", "created_at", "updated_at", "head_branch", "event", "commiter", "commit_sha", "commit_time", "commit_message"},
           }
 				}
 			}
