@@ -52,7 +52,7 @@ var (
 			Name: "github_workflow_runs",
 			Help: "Workflow runs",
 		},
-		[]string{"repo", "workflow", "id", "status", "url", "created_at", "updated_at", "head_branch", "event"},
+		[]string{"repo", "workflow", "id", "url", "created_at", "updated_at", "head_branch", "event"},
 	)
 
 )
@@ -264,9 +264,8 @@ func getWorkflowLatestStatus() {
 					  } else if run.Status == "queued" {
 						  s = 4
 					  }
-            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.Status, run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event).Set(s)
+            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event).Set(s)
 
-		        //[]string{"repo", "workflow", "id", "status", "url", "created_at", "updated_at", "head_branch", "event"},
           }
 				}
 			}
