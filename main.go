@@ -253,7 +253,8 @@ func getWorkflowLatestStatus() {
 					}
 					workflowLatestStatusGauge.WithLabelValues(repo, w.Name, r.HeadBranch, r.Event).Set(s)
           for _,  run := range wrs.WorkflowRuns {
-            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event)
+            workflowRunsGauge.WithLabelValues(repo, w.Name, strconv.Itoa(run.ID), run.Status, run.URL, run.CreatedAt, run.UpdatedAt, run.HeadBranch, run.Event)
+		        //[]string{"repo", "workflow", "id", "status", "url", "created_at", "updated_at", "head_branch", "event"},
           }
 				}
 			}
